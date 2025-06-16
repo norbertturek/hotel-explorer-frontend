@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-const API_BASE_URL = 'https://api.turystyka.gov.pl';
+import apiClient from '@/lib/api';
 
 interface Hotel {
   uid: string;
@@ -46,36 +45,35 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
   const [totalPages, setTotalPages] = useState(0);
   const { toast } = useToast();
 
-  const buildApiUrl = useCallback((params: FetchHotelsParams): string => {
-    const url = new URL(`${API_BASE_URL}/api/cwoh`);
-    
-    // Paginacja
-    url.searchParams.append('page', params.page.toString());
-    url.searchParams.append('size', params.size.toString());
+  const buildParams = useCallback((params: FetchHotelsParams) => {
+    const searchParams: any = {
+      page: params.page,
+      size: params.size,
+    };
     
     // Wyszukiwanie po nazwie
     if (params.searchQuery) {
-      url.searchParams.append('nazwa', params.searchQuery);
+      searchParams.nazwa = params.searchQuery;
     }
     
     // Filtry
     if (params.filters.wojewodztwo) {
-      url.searchParams.append('wojewodztwo', params.filters.wojewodztwo);
+      searchParams.wojewodztwo = params.filters.wojewodztwo;
     }
     if (params.filters.powiat) {
-      url.searchParams.append('powiat', params.filters.powiat);
+      searchParams.powiat = params.filters.powiat;
     }
     if (params.filters.gmina) {
-      url.searchParams.append('gmina', params.filters.gmina);
+      searchParams.gmina = params.filters.gmina;
     }
     if (params.filters.rodzaj) {
-      url.searchParams.append('rodzaj', params.filters.rodzaj);
+      searchParams.rodzaj = params.filters.rodzaj;
     }
     if (params.filters.kategoria) {
-      url.searchParams.append('kategoria', params.filters.kategoria);
+      searchParams.kategoria = params.filters.kategoria;
     }
     
-    return url.toString();
+    return searchParams;
   }, []);
 
   const fetchHotels = useCallback(async () => {
@@ -83,15 +81,11 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     setError(null);
     
     try {
-      const apiUrl = buildApiUrl({ searchQuery, filters, page, size });
-      console.log('Fetching hotels from:', apiUrl);
+      const params = buildParams({ searchQuery, filters, page, size });
+      console.log('Fetching hotels with params:', params);
       
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const responseData: HotelsResponse = await response.json();
+      const response = await apiClient.get('/registers/open/cwoh', { params });
+      const responseData: HotelsResponse = response.data;
       
       setData(responseData.content || []);
       setTotalElements(responseData.totalElements || 0);
@@ -101,7 +95,7 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     } catch (err) {
       const errorMessage = 'Nie udało się pobrać listy hoteli';
       setError(errorMessage);
-      console.error('API Error:', err);
+      console.error('Error fetching hotels:', err);
       toast({
         title: "Błąd",
         description: errorMessage,
@@ -110,7 +104,7 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, page, size, buildApiUrl, toast]);
+  }, [searchQuery, filters, page, size, buildParams, toast]);
 
   const exportToCsv = useCallback(() => {
     try {

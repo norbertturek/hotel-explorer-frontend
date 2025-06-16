@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-
-const API_BASE_URL = 'https://api.turystyka.gov.pl';
+import apiClient from '@/lib/api';
 
 export const useFetchFilters = () => {
   const [wojewodztwa, setWojewodztwa] = useState<string[]>([]);
@@ -13,11 +12,8 @@ export const useFetchFilters = () => {
     const fetchWojewodztwa = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/cwoh/wojewodztwa`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const response = await apiClient.get('/registers/open/cwoh/wojewodztwa');
+        const data = response.data;
         setWojewodztwa(Array.isArray(data) ? data : []);
         console.log('Fetched wojewodztwa:', data);
       } catch (error) {
@@ -39,11 +35,8 @@ export const useFetchFilters = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cwoh/powiaty/${encodeURIComponent(wojewodztwo)}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const response = await apiClient.get(`/registers/open/cwoh/powiaty/${encodeURIComponent(wojewodztwo)}`);
+      const data = response.data;
       setPowiaty(Array.isArray(data) ? data : []);
       setGminy([]); // Reset gmin when wojewodztwo changes
       console.log('Fetched powiaty for', wojewodztwo, ':', data);
@@ -63,11 +56,8 @@ export const useFetchFilters = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cwoh/gminy/${encodeURIComponent(powiat)}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const response = await apiClient.get(`/registers/open/cwoh/gminy/${encodeURIComponent(powiat)}`);
+      const data = response.data;
       setGminy(Array.isArray(data) ? data : []);
       console.log('Fetched gminy for', powiat, ':', data);
     } catch (error) {

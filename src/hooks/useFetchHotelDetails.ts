@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-const API_BASE_URL = 'https://api.turystyka.gov.pl';
+import apiClient from '@/lib/api';
 
 interface HotelDetails {
   uid: string;
@@ -38,19 +37,15 @@ export const useFetchHotelDetails = (id: string) => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cwoh/${encodeURIComponent(id)}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const hotelDetails: HotelDetails = await response.json();
+      const response = await apiClient.get(`/registers/open/cwoh/${encodeURIComponent(id)}`);
+      const hotelDetails: HotelDetails = response.data;
       setData(hotelDetails);
       
       console.log(`Fetched details for hotel ${id}:`, hotelDetails);
     } catch (err) {
       const errorMessage = 'Nie udało się pobrać szczegółów hotelu';
       setError(errorMessage);
-      console.error('API Error:', err);
+      console.error(`Error fetching hotel with ID ${id}:`, err);
       toast({
         title: "Błąd",
         description: errorMessage,
