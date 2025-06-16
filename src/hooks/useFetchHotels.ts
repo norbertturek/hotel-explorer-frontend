@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+const API_BASE_URL = 'https://api.turystyka.gov.pl';
+
 interface Hotel {
   uid: string;
   nazwa: string;
@@ -44,115 +46,36 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
   const [totalPages, setTotalPages] = useState(0);
   const { toast } = useToast();
 
-  // Mock data - w rzeczywistej aplikacji zastąpić wywołaniami API
-  const generateMockHotels = useCallback((params: FetchHotelsParams): HotelsResponse => {
-    const mockHotels: Hotel[] = [
-      {
-        uid: '1',
-        nazwa: 'Hotel Bristol Warsaw',
-        rodzaj: 'hotel',
-        kategoria: '5',
-        miejscowosc: 'Warszawa',
-        wojewodztwo: 'mazowieckie',
-        status: 'aktywny',
-        dataDecyzji: '2023-01-15',
-        telefon: '+48 22 625 25 25',
-        www: 'https://www.hotelbristolwarsaw.pl'
-      },
-      {
-        uid: '2',
-        nazwa: 'Pensjonat Pod Lipami',
-        rodzaj: 'pensjonat',
-        kategoria: '3',
-        miejscowosc: 'Zakopane',
-        wojewodztwo: 'małopolskie',
-        status: 'aktywny',
-        dataDecyzji: '2023-02-10',
-        telefon: '+48 18 201 23 45'
-      },
-      {
-        uid: '3',
-        nazwa: 'Hotel Mercure Gdańsk',
-        rodzaj: 'hotel',
-        kategoria: '4',
-        miejscowosc: 'Gdańsk',
-        wojewodztwo: 'pomorskie',
-        status: 'aktywny',
-        dataDecyzji: '2023-03-05',
-        www: 'https://www.mercure.com'
-      },
-      {
-        uid: '4',
-        nazwa: 'Hostel Moon',
-        rodzaj: 'hostel',
-        kategoria: '2',
-        miejscowosc: 'Kraków',
-        wojewodztwo: 'małopolskie',
-        status: 'zawieszony',
-        dataDecyzji: '2023-01-20'
-      },
-      {
-        uid: '5',
-        nazwa: 'Hotel Grand Wrocław',
-        rodzaj: 'hotel',
-        kategoria: '4',
-        miejscowosc: 'Wrocław',
-        wojewodztwo: 'dolnośląskie',
-        status: 'aktywny',
-        dataDecyzji: '2023-04-12',
-        telefon: '+48 71 123 45 67',
-        www: 'https://www.grandwroclaw.pl'
-      },
-      {
-        uid: '6',
-        nazwa: 'Motel Drogowiec',
-        rodzaj: 'motel',
-        kategoria: '2',
-        miejscowosc: 'Łódź',
-        wojewodztwo: 'łódzkie',
-        status: 'aktywny',
-        dataDecyzji: '2023-02-28'
-      }
-    ];
-
-    // Filtrowanie
-    let filteredHotels = mockHotels.filter(hotel => {
-      if (params.searchQuery && !hotel.nazwa.toLowerCase().includes(params.searchQuery.toLowerCase())) {
-        return false;
-      }
-      if (params.filters.wojewodztwo && hotel.wojewodztwo !== params.filters.wojewodztwo) {
-        return false;
-      }
-      if (params.filters.rodzaj && hotel.rodzaj !== params.filters.rodzaj) {
-        return false;
-      }
-      if (params.filters.kategoria && hotel.kategoria !== params.filters.kategoria) {
-        return false;
-      }
-      return true;
-    });
-
-    // Duplikowanie danych dla symulacji większej liczby wyników
-    const extendedHotels = [...Array(10)].flatMap((_, i) => 
-      filteredHotels.map(hotel => ({
-        ...hotel,
-        uid: `${hotel.uid}-${i}`,
-        nazwa: `${hotel.nazwa} ${i > 0 ? `(${i + 1})` : ''}`
-      }))
-    );
-
-    const totalCount = extendedHotels.length;
-    const startIndex = params.page * params.size;
-    const endIndex = startIndex + params.size;
-    const paginatedHotels = extendedHotels.slice(startIndex, endIndex);
-
-    return {
-      content: paginatedHotels,
-      totalElements: totalCount,
-      totalPages: Math.ceil(totalCount / params.size),
-      number: params.page,
-      size: params.size
-    };
+  const buildApiUrl = useCallback((params: FetchHotelsParams): string => {
+    const url = new URL(`${API_BASE_URL}/api/cwoh`);
+    
+    // Paginacja
+    url.searchParams.append('page', params.page.toString());
+    url.searchParams.append('size', params.size.toString());
+    
+    // Wyszukiwanie po nazwie
+    if (params.searchQuery) {
+      url.searchParams.append('nazwa', params.searchQuery);
+    }
+    
+    // Filtry
+    if (params.filters.wojewodztwo) {
+      url.searchParams.append('wojewodztwo', params.filters.wojewodztwo);
+    }
+    if (params.filters.powiat) {
+      url.searchParams.append('powiat', params.filters.powiat);
+    }
+    if (params.filters.gmina) {
+      url.searchParams.append('gmina', params.filters.gmina);
+    }
+    if (params.filters.rodzaj) {
+      url.searchParams.append('rodzaj', params.filters.rodzaj);
+    }
+    if (params.filters.kategoria) {
+      url.searchParams.append('kategoria', params.filters.kategoria);
+    }
+    
+    return url.toString();
   }, []);
 
   const fetchHotels = useCallback(async () => {
@@ -160,19 +83,25 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     setError(null);
     
     try {
-      // Symulacja API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const apiUrl = buildApiUrl({ searchQuery, filters, page, size });
+      console.log('Fetching hotels from:', apiUrl);
       
-      const response = generateMockHotels({ searchQuery, filters, page, size });
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
-      setData(response.content);
-      setTotalElements(response.totalElements);
-      setTotalPages(response.totalPages);
+      const responseData: HotelsResponse = await response.json();
       
-      console.log(`Fetched ${response.content.length} hotels (page ${page + 1}/${response.totalPages})`);
+      setData(responseData.content || []);
+      setTotalElements(responseData.totalElements || 0);
+      setTotalPages(responseData.totalPages || 0);
+      
+      console.log(`Fetched ${responseData.content?.length || 0} hotels (page ${page + 1}/${responseData.totalPages || 1})`);
     } catch (err) {
       const errorMessage = 'Nie udało się pobrać listy hoteli';
       setError(errorMessage);
+      console.error('API Error:', err);
       toast({
         title: "Błąd",
         description: errorMessage,
@@ -181,7 +110,7 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, page, size, generateMockHotels, toast]);
+  }, [searchQuery, filters, page, size, buildApiUrl, toast]);
 
   const exportToCsv = useCallback(() => {
     try {

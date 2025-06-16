@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+const API_BASE_URL = 'https://api.turystyka.gov.pl';
+
 interface HotelDetails {
   uid: string;
   nazwa: string;
@@ -29,62 +31,6 @@ export const useFetchHotelDetails = (id: string) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const generateMockHotelDetails = useCallback((hotelId: string): HotelDetails => {
-    // Mock data based on ID
-    const mockHotels: Record<string, HotelDetails> = {
-      '1': {
-        uid: '1',
-        nazwa: 'Hotel Bristol Warsaw',
-        rodzaj: 'hotel',
-        kategoria: '5',
-        miejscowosc: 'Warszawa',
-        wojewodztwo: 'mazowieckie',
-        powiat: 'warszawski',
-        gmina: 'Warszawa',
-        adres: 'ul. Krakowskie Przedmieście 42/44',
-        kodPocztowy: '00-325',
-        status: 'aktywny',
-        dataDecyzji: '2023-01-15',
-        telefon: '+48 22 625 25 25',
-        email: 'reception@hotelbristol.pl',
-        www: 'https://www.hotelbristolwarsaw.pl',
-        opis: 'Luksusowy hotel w sercu Warszawy, oferujący najwyższy standard obsługi i komfortu. Położony przy Krakowskim Przedmieściu, w odległości krótkiego spaceru od Starego Miasta i głównych atrakcji turystycznych.',
-        numerEwidencyjny: 'CWOIH/WAR/2023/001',
-        numerDecyzji: 'DT-I.7020.1.2023'
-      },
-      '2': {
-        uid: '2',
-        nazwa: 'Pensjonat Pod Lipami',
-        rodzaj: 'pensjonat',
-        kategoria: '3',
-        miejscowosc: 'Zakopane',
-        wojewodztwo: 'małopolskie',
-        powiat: 'tatrzański',
-        gmina: 'Zakopane',
-        adres: 'ul. Krupówki 15',
-        kodPocztowy: '34-500',
-        status: 'aktywny',
-        dataDecyzji: '2023-02-10',
-        telefon: '+48 18 201 23 45',
-        email: 'info@podlipami.pl',
-        opis: 'Rodzinny pensjonat w centrum Zakopanego, oferujący ciepłą atmosferę i regionalną kuchnię. Idealny dla miłośników gór i tradycji góralskiej.',
-        numerEwidencyjny: 'CWOIH/ZAK/2023/015',
-        numerDecyzji: 'DT-I.7020.15.2023'
-      }
-    };
-
-    return mockHotels[hotelId] || {
-      uid: hotelId,
-      nazwa: `Hotel ${hotelId}`,
-      rodzaj: 'hotel',
-      kategoria: '3',
-      miejscowosc: 'Warszawa',
-      wojewodztwo: 'mazowieckie',
-      status: 'aktywny',
-      dataDecyzji: '2023-01-01'
-    };
-  }, []);
-
   const fetchHotelDetails = useCallback(async () => {
     if (!id) return;
 
@@ -92,16 +38,19 @@ export const useFetchHotelDetails = (id: string) => {
     setError(null);
     
     try {
-      // Symulacja API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}/api/cwoh/${encodeURIComponent(id)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
-      const hotelDetails = generateMockHotelDetails(id);
+      const hotelDetails: HotelDetails = await response.json();
       setData(hotelDetails);
       
       console.log(`Fetched details for hotel ${id}:`, hotelDetails);
     } catch (err) {
       const errorMessage = 'Nie udało się pobrać szczegółów hotelu';
       setError(errorMessage);
+      console.error('API Error:', err);
       toast({
         title: "Błąd",
         description: errorMessage,
@@ -110,7 +59,7 @@ export const useFetchHotelDetails = (id: string) => {
     } finally {
       setLoading(false);
     }
-  }, [id, generateMockHotelDetails, toast]);
+  }, [id, toast]);
 
   const exportToCsv = useCallback((hotel: HotelDetails) => {
     try {

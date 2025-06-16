@@ -1,41 +1,25 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+const API_BASE_URL = 'https://api.turystyka.gov.pl';
+
 export const useFetchFilters = () => {
   const [wojewodztwa, setWojewodztwa] = useState<string[]>([]);
   const [powiaty, setPowiaty] = useState<string[]>([]);
   const [gminy, setGminy] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Symulacja danych - w rzeczywistej aplikacji to będą wywołania API
-  const mockWojewodztwa = [
-    'dolnośląskie', 'kujawsko-pomorskie', 'lubelskie', 'lubuskie',
-    'łódzkie', 'małopolskie', 'mazowieckie', 'opolskie',
-    'podkarpackie', 'podlaskie', 'pomorskie', 'śląskie',
-    'świętokrzyskie', 'warmińsko-mazurskie', 'wielkopolskie', 'zachodniopomorskie'
-  ];
-
-  const mockPowiaty: Record<string, string[]> = {
-    'mazowieckie': ['warszawski', 'krakowski', 'gdański', 'wrocławski'],
-    'małopolskie': ['krakowski', 'tarnowski', 'nowosądecki'],
-    'pomorskie': ['gdański', 'słupski', 'wejherowski'],
-    'śląskie': ['katowicki', 'częstochowski', 'bielski']
-  };
-
-  const mockGminy: Record<string, string[]> = {
-    'warszawski': ['Warszawa', 'Pruszków', 'Piaseczno', 'Legionowo'],
-    'krakowski': ['Kraków', 'Wieliczka', 'Skawina'],
-    'gdański': ['Gdańsk', 'Sopot', 'Pruszcz Gdański']
-  };
-
   useEffect(() => {
-    // Inicjalne załadowanie województw
     const fetchWojewodztwa = async () => {
       setLoading(true);
       try {
-        // Symulacja API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setWojewodztwa(mockWojewodztwa);
+        const response = await fetch(`${API_BASE_URL}/api/cwoh/wojewodztwa`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setWojewodztwa(Array.isArray(data) ? data : []);
+        console.log('Fetched wojewodztwa:', data);
       } catch (error) {
         console.error('Error fetching wojewodztwa:', error);
         setWojewodztwa([]);
@@ -55,10 +39,14 @@ export const useFetchFilters = () => {
 
     setLoading(true);
     try {
-      // Symulacja API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setPowiaty(mockPowiaty[wojewodztwo] || []);
+      const response = await fetch(`${API_BASE_URL}/api/cwoh/powiaty/${encodeURIComponent(wojewodztwo)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setPowiaty(Array.isArray(data) ? data : []);
       setGminy([]); // Reset gmin when wojewodztwo changes
+      console.log('Fetched powiaty for', wojewodztwo, ':', data);
     } catch (error) {
       console.error('Error fetching powiaty:', error);
       setPowiaty([]);
@@ -75,9 +63,13 @@ export const useFetchFilters = () => {
 
     setLoading(true);
     try {
-      // Symulacja API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setGminy(mockGminy[powiat] || []);
+      const response = await fetch(`${API_BASE_URL}/api/cwoh/gminy/${encodeURIComponent(powiat)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setGminy(Array.isArray(data) ? data : []);
+      console.log('Fetched gminy for', powiat, ':', data);
     } catch (error) {
       console.error('Error fetching gminy:', error);
       setGminy([]);
