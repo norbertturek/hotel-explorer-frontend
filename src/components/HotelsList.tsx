@@ -1,4 +1,3 @@
-
 import { useFetchHotels } from '@/hooks/useFetchHotels';
 import { HotelCard } from '@/components/HotelCard';
 import { Button } from '@/components/ui/button';
@@ -127,9 +126,22 @@ export const HotelsList = ({ searchQuery, filters }: HotelsListProps) => {
               </Button>
               
               <div className="flex space-x-1">
-                {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  const pageNumber = Math.max(0, Math.min(page - 2 + i, totalPages - 1));
-                  return (
+                {(() => {
+                  const maxVisiblePages = 5;
+                  let startPage = Math.max(0, page - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+                  
+                  // Dostosuj startPage jeśli endPage jest na końcu
+                  if (endPage - startPage < maxVisiblePages - 1) {
+                    startPage = Math.max(0, endPage - maxVisiblePages + 1);
+                  }
+                  
+                  const pages = [];
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+                  
+                  return pages.map((pageNumber) => (
                     <Button
                       key={pageNumber}
                       onClick={() => handlePageChange(pageNumber)}
@@ -139,8 +151,8 @@ export const HotelsList = ({ searchQuery, filters }: HotelsListProps) => {
                     >
                       {pageNumber + 1}
                     </Button>
-                  );
-                })}
+                  ));
+                })()}
               </div>
               
               <Button

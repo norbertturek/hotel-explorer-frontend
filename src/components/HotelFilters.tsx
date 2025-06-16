@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -29,13 +28,15 @@ export const HotelFilters = ({ filters, onFiltersChange }: HotelFiltersProps) =>
   }, [filters.wojewodztwo, loadPowiaty]);
 
   useEffect(() => {
-    if (filters.powiat) {
-      loadGminy(filters.powiat);
+    if (filters.powiat && filters.wojewodztwo) {
+      loadGminy(filters.wojewodztwo, filters.powiat);
     }
-  }, [filters.powiat, loadGminy]);
+  }, [filters.powiat, filters.wojewodztwo, loadGminy]);
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
-    const newFilters = { ...filters, [key]: value };
+    // Konwertuj "all" na pusty string dla API
+    const apiValue = value === "all" ? "" : value;
+    const newFilters = { ...filters, [key]: apiValue };
     
     // Reset dependent filters
     if (key === 'wojewodztwo') {
@@ -79,11 +80,12 @@ export const HotelFilters = ({ filters, onFiltersChange }: HotelFiltersProps) =>
           <Label htmlFor="wojewodztwo" className="text-xs text-gray-600 mb-1 block">
             Województwo
           </Label>
-          <Select value={filters.wojewodztwo} onValueChange={(value) => handleFilterChange('wojewodztwo', value)}>
+          <Select value={filters.wojewodztwo || "all"} onValueChange={(value) => handleFilterChange('wojewodztwo', value)}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Wybierz województwo" />
+              <SelectValue placeholder="Wszystkie województwa" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Wszystkie województwa</SelectItem>
               {wojewodztwa.map((woj) => (
                 <SelectItem key={woj} value={woj}>
                   {woj}
@@ -98,14 +100,15 @@ export const HotelFilters = ({ filters, onFiltersChange }: HotelFiltersProps) =>
             Powiat
           </Label>
           <Select 
-            value={filters.powiat} 
+            value={filters.powiat || "all"} 
             onValueChange={(value) => handleFilterChange('powiat', value)}
             disabled={!filters.wojewodztwo || loading}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Wybierz powiat" />
+              <SelectValue placeholder="Wszystkie powiaty" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Wszystkie powiaty</SelectItem>
               {powiaty.map((pow) => (
                 <SelectItem key={pow} value={pow}>
                   {pow}
@@ -120,14 +123,15 @@ export const HotelFilters = ({ filters, onFiltersChange }: HotelFiltersProps) =>
             Gmina
           </Label>
           <Select 
-            value={filters.gmina} 
+            value={filters.gmina || "all"} 
             onValueChange={(value) => handleFilterChange('gmina', value)}
             disabled={!filters.powiat || loading}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Wybierz gminę" />
+              <SelectValue placeholder="Wszystkie gminy" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Wszystkie gminy</SelectItem>
               {gminy.map((gmina) => (
                 <SelectItem key={gmina} value={gmina}>
                   {gmina}
@@ -146,34 +150,39 @@ export const HotelFilters = ({ filters, onFiltersChange }: HotelFiltersProps) =>
             <Label htmlFor="rodzaj" className="text-xs text-gray-600 mb-1 block">
               Rodzaj
             </Label>
-            <Select value={filters.rodzaj} onValueChange={(value) => handleFilterChange('rodzaj', value)}>
+            <Select value={filters.rodzaj || "all"} onValueChange={(value) => handleFilterChange('rodzaj', value)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Wszystkie rodzaje" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="hotel">Hotel</SelectItem>
-                <SelectItem value="pensjonat">Pensjonat</SelectItem>
-                <SelectItem value="motel">Motel</SelectItem>
-                <SelectItem value="hostel">Hostel</SelectItem>
-                <SelectItem value="aparthotel">Aparthotel</SelectItem>
+                <SelectItem value="all">Wszystkie rodzaje</SelectItem>
+                <SelectItem value="RODZ_HOT">Hotel</SelectItem>
+                <SelectItem value="RODZ_PEN">Pensjonat</SelectItem>
+                <SelectItem value="RODZ_MOT">Motel</SelectItem>
+                <SelectItem value="RODZ_HOS">Hostel</SelectItem>
+                <SelectItem value="RODZ_APH">Aparthotel</SelectItem>
+                <SelectItem value="RODZ_CAM">Camping</SelectItem>
+                <SelectItem value="RODZ_DOM">Dom wczasowy</SelectItem>
+                <SelectItem value="RODZ_OSR">Ośrodek wypoczynkowy</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <Label htmlFor="kategoria" className="text-xs text-gray-600 mb-1 block">
-              Kategoria
+              Ocena (gwiazdki)
             </Label>
-            <Select value={filters.kategoria} onValueChange={(value) => handleFilterChange('kategoria', value)}>
+            <Select value={filters.kategoria || "all"} onValueChange={(value) => handleFilterChange('kategoria', value)}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Wszystkie kategorie" />
+                <SelectValue placeholder="Wszystkie oceny" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">⭐ 1 gwiazdka</SelectItem>
-                <SelectItem value="2">⭐⭐ 2 gwiazdki</SelectItem>
-                <SelectItem value="3">⭐⭐⭐ 3 gwiazdki</SelectItem>
-                <SelectItem value="4">⭐⭐⭐⭐ 4 gwiazdki</SelectItem>
-                <SelectItem value="5">⭐⭐⭐⭐⭐ 5 gwiazdek</SelectItem>
+                <SelectItem value="all">Wszystkie oceny</SelectItem>
+                <SelectItem value="KAT_1ST_HOT">⭐ 1 gwiazdka</SelectItem>
+                <SelectItem value="KAT_2ST_HOT">⭐⭐ 2 gwiazdki</SelectItem>
+                <SelectItem value="KAT_3ST_HOT">⭐⭐⭐ 3 gwiazdki</SelectItem>
+                <SelectItem value="KAT_4ST_HOT">⭐⭐⭐⭐ 4 gwiazdki</SelectItem>
+                <SelectItem value="KAT_5ST_HOT">⭐⭐⭐⭐⭐ 5 gwiazdek</SelectItem>
               </SelectContent>
             </Select>
           </div>

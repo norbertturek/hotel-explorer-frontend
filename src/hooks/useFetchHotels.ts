@@ -1,16 +1,19 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 
 interface Hotel {
   uid: string;
-  nazwa: string;
-  rodzaj: string;
-  kategoria: string;
-  miejscowosc: string;
-  wojewodztwo: string;
-  status: string;
+  name: string;
+  kind: string;
+  category: string;
+  city: string;
+  voivodeship: string;
+  district?: string;
+  community?: string;
+  street?: string;
+  postalCode?: string;
+  status?: string;
   dataDecyzji?: string;
   telefon?: string;
   www?: string;
@@ -37,6 +40,19 @@ interface HotelsResponse {
   size: number;
 }
 
+interface SearchParams {
+  page: number;
+  size: number;
+  name?: string;
+  voivodeship?: string;
+  district?: string;
+  community?: string;
+  city?: string;
+  street?: string;
+  kind?: string;
+  category?: string;
+}
+
 export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotelsParams) => {
   const [data, setData] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,31 +62,31 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
   const { toast } = useToast();
 
   const buildParams = useCallback((params: FetchHotelsParams) => {
-    const searchParams: any = {
+    const searchParams: SearchParams = {
       page: params.page,
       size: params.size,
     };
     
     // Wyszukiwanie po nazwie
     if (params.searchQuery) {
-      searchParams.nazwa = params.searchQuery;
+      searchParams.name = params.searchQuery;
     }
     
-    // Filtry
+    // Filtry - mapujemy polskie nazwy na angielskie zgodne z API
     if (params.filters.wojewodztwo) {
-      searchParams.wojewodztwo = params.filters.wojewodztwo;
+      searchParams.voivodeship = params.filters.wojewodztwo;
     }
     if (params.filters.powiat) {
-      searchParams.powiat = params.filters.powiat;
+      searchParams.district = params.filters.powiat;
     }
     if (params.filters.gmina) {
-      searchParams.gmina = params.filters.gmina;
+      searchParams.community = params.filters.gmina;
     }
     if (params.filters.rodzaj) {
-      searchParams.rodzaj = params.filters.rodzaj;
+      searchParams.kind = params.filters.rodzaj;
     }
     if (params.filters.kategoria) {
-      searchParams.kategoria = params.filters.kategoria;
+      searchParams.category = params.filters.kategoria;
     }
     
     return searchParams;
@@ -106,17 +122,37 @@ export const useFetchHotels = ({ searchQuery, filters, page, size }: FetchHotels
     }
   }, [searchQuery, filters, page, size, buildParams, toast]);
 
+  const getReadableKind = (kind: string) => {
+    const kindMap: { [key: string]: string } = {
+      'RODZ_HOT': 'Hotel',
+      'RODZ_PEN': 'Pensjonat',
+      'RODZ_MOT': 'Motel',
+      'RODZ_HOS': 'Hostel',
+      'RODZ_APH': 'Aparthotel',
+      'RODZ_CAM': 'Camping',
+      'RODZ_DOM': 'Dom wczasowy',
+      'RODZ_OSR': 'Ośrodek wypoczynkowy',
+      'RODZ_INN': 'Inne'
+    };
+    
+    return kindMap[kind] || kind;
+  };
+
   const exportToCsv = useCallback(() => {
     try {
       const csvContent = [
-        'Nazwa,Rodzaj,Kategoria,Miejscowość,Województwo,Status,Data decyzji,Telefon,WWW',
+        'Nazwa,Rodzaj,Kategoria,Miejscowość,Województwo,Powiat,Gmina,Adres,Kod pocztowy,Status,Data decyzji,Telefon,WWW',
         ...data.map(hotel => [
-          hotel.nazwa,
-          hotel.rodzaj,
-          hotel.kategoria,
-          hotel.miejscowosc,
-          hotel.wojewodztwo,
-          hotel.status,
+          hotel.name,
+          getReadableKind(hotel.kind),
+          hotel.category,
+          hotel.city,
+          hotel.voivodeship,
+          hotel.district || '',
+          hotel.community || '',
+          hotel.street || '',
+          hotel.postalCode || '',
+          hotel.status || '',
           hotel.dataDecyzji || '',
           hotel.telefon || '',
           hotel.www || ''

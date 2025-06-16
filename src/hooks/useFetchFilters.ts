@@ -1,31 +1,30 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import apiClient from '@/lib/api';
 
+// Statyczna lista województw w Polsce
+const WOJEWODZTWA = [
+  'Dolnośląskie',
+  'Kujawsko-pomorskie', 
+  'Lubelskie',
+  'Lubuskie',
+  'Łódzkie',
+  'Małopolskie',
+  'Mazowieckie',
+  'Opolskie',
+  'Podkarpackie',
+  'Podlaskie',
+  'Pomorskie',
+  'Śląskie',
+  'Świętokrzyskie',
+  'Warmińsko-mazurskie',
+  'Wielkopolskie',
+  'Zachodniopomorskie'
+];
+
 export const useFetchFilters = () => {
-  const [wojewodztwa, setWojewodztwa] = useState<string[]>([]);
   const [powiaty, setPowiaty] = useState<string[]>([]);
   const [gminy, setGminy] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchWojewodztwa = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.get('/registers/open/cwoh/wojewodztwa');
-        const data = response.data;
-        setWojewodztwa(Array.isArray(data) ? data : []);
-        console.log('Fetched wojewodztwa:', data);
-      } catch (error) {
-        console.error('Error fetching wojewodztwa:', error);
-        setWojewodztwa([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWojewodztwa();
-  }, []);
 
   const loadPowiaty = useCallback(async (wojewodztwo: string) => {
     if (!wojewodztwo) {
@@ -35,11 +34,24 @@ export const useFetchFilters = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.get(`/registers/open/cwoh/powiaty/${encodeURIComponent(wojewodztwo)}`);
-      const data = response.data;
-      setPowiaty(Array.isArray(data) ? data : []);
+      // Pobieramy hotele z danego województwa i wyciągamy unikalne powiaty
+      const response = await apiClient.get('/registers/open/cwoh', {
+        params: {
+          voivodeship: wojewodztwo,
+          size: 1000 // Pobieramy więcej rekordów aby mieć pełną listę powiatów
+        }
+      });
+      
+      const hotels = response.data.content || [];
+      const uniquePowiaty = [...new Set(
+        hotels
+          .map((hotel: any) => hotel.district)
+          .filter((district: string) => district && district.trim() !== '')
+      )].sort();
+      
+      setPowiaty(uniquePowiaty);
       setGminy([]); // Reset gmin when wojewodztwo changes
-      console.log('Fetched powiaty for', wojewodztwo, ':', data);
+      console.log('Fetched powiaty for', wojewodztwo, ':', uniquePowiaty);
     } catch (error) {
       console.error('Error fetching powiaty:', error);
       setPowiaty([]);
@@ -48,18 +60,33 @@ export const useFetchFilters = () => {
     }
   }, []);
 
-  const loadGminy = useCallback(async (powiat: string) => {
-    if (!powiat) {
+  const loadGminy = useCallback(async (wojewodztwo: string, powiat: string) => {
+    if (!wojewodztwo || !powiat) {
       setGminy([]);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await apiClient.get(`/registers/open/cwoh/gminy/${encodeURIComponent(powiat)}`);
-      const data = response.data;
-      setGminy(Array.isArray(data) ? data : []);
-      console.log('Fetched gminy for', powiat, ':', data);
+      // Pobieramy hotele z danego województwa i powiatu i wyciągamy unikalne gminy
+      const response = await apiClient.get('/registers/open/cwoh', {
+        params: {
+          voivodeship: wojewodztwo,
+          // Uwaga: API może nie mieć parametru 'district', sprawdzimy w dokumentacji
+          size: 1000
+        }
+      });
+      
+      const hotels = response.data.content || [];
+      const uniqueGminy = [...new Set(
+        hotels
+          .filter((hotel: any) => hotel.district === powiat)
+          .map((hotel: any) => hotel.community)
+          .filter((community: string) => community && community.trim() !== '')
+      )].sort();
+      
+      setGminy(uniqueGminy);
+      console.log('Fetched gminy for', powiat, ':', uniqueGminy);
     } catch (error) {
       console.error('Error fetching gminy:', error);
       setGminy([]);
@@ -69,7 +96,7 @@ export const useFetchFilters = () => {
   }, []);
 
   return {
-    wojewodztwa,
+    wojewodztwa: WOJEWODZTWA,
     powiaty,
     gminy,
     loading,

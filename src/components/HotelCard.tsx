@@ -1,4 +1,3 @@
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -7,12 +6,16 @@ import { useNavigate } from 'react-router-dom';
 
 interface Hotel {
   uid: string;
-  nazwa: string;
-  rodzaj: string;
-  kategoria: string;
-  miejscowosc: string;
-  wojewodztwo: string;
-  status: string;
+  name: string;
+  kind: string;
+  category: string;
+  city: string;
+  voivodeship: string;
+  district?: string;
+  community?: string;
+  street?: string;
+  postalCode?: string;
+  status?: string;
   dataDecyzji?: string;
   telefon?: string;
   www?: string;
@@ -42,8 +45,26 @@ export const HotelCard = ({ hotel }: HotelCardProps) => {
     }
   };
 
+  const getReadableKind = (kind: string) => {
+    const kindMap: { [key: string]: string } = {
+      'RODZ_HOT': 'Hotel',
+      'RODZ_PEN': 'Pensjonat',
+      'RODZ_MOT': 'Motel',
+      'RODZ_HOS': 'Hostel',
+      'RODZ_APH': 'Aparthotel',
+      'RODZ_CAM': 'Camping',
+      'RODZ_DOM': 'Dom wczasowy',
+      'RODZ_OSR': 'Ośrodek wypoczynkowy',
+      'RODZ_INN': 'Inne'
+    };
+    
+    return kindMap[kind] || kind;
+  };
+
   const renderStars = (kategoria: string) => {
-    const stars = parseInt(kategoria) || 0;
+    // Wyciągamy liczbę gwiazdek z formatu API (np. "KAT_3ST_HOT" -> 3)
+    const match = kategoria.match(/(\d+)ST/);
+    const stars = match ? parseInt(match[1]) : 0;
     return (
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
@@ -65,16 +86,29 @@ export const HotelCard = ({ hotel }: HotelCardProps) => {
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
-              {hotel.nazwa}
+              {hotel.name}
             </h3>
-            <div className="flex items-center mt-1 text-sm text-gray-600">
+            <div className="space-y-1">
+              <div className="flex items-center text-sm text-gray-600">
               <MapPin className="w-4 h-4 mr-1" />
-              {hotel.miejscowosc}, {hotel.wojewodztwo}
+                {hotel.city}, {hotel.voivodeship}
+              </div>
+              {hotel.street && (
+                <div className="text-sm text-gray-500 ml-5">
+                  {hotel.street}
+                </div>
+              )}
+              <div className="text-sm text-gray-500 ml-5">
+                {hotel.postalCode && `${hotel.postalCode} `}
+                {hotel.district && `Powiat ${hotel.district}`}
+              </div>
             </div>
           </div>
+          {hotel.status && (
           <Badge className={getStatusColor(hotel.status)}>
             {hotel.status}
           </Badge>
+          )}
         </div>
       </CardHeader>
 
@@ -82,9 +116,9 @@ export const HotelCard = ({ hotel }: HotelCardProps) => {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm font-medium text-gray-700">Rodzaj: </span>
-            <span className="text-sm text-gray-600 capitalize">{hotel.rodzaj}</span>
+            <span className="text-sm text-gray-600 capitalize">{getReadableKind(hotel.kind)}</span>
           </div>
-          {hotel.kategoria && renderStars(hotel.kategoria)}
+          {hotel.category && renderStars(hotel.category)}
         </div>
 
         {hotel.dataDecyzji && (
