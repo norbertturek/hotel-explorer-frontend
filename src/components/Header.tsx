@@ -1,4 +1,3 @@
-
 import { MapPin, Phone, Mail } from 'lucide-react';
 
 export const Header = () => {
@@ -19,11 +18,11 @@ export const Header = () => {
           <div className="hidden md:flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-600">
               <Phone className="w-4 h-4" />
-              <span className="text-sm">Infolinia: 22 123 45 67</span>
+              <span className="text-sm">Infolinia: 222 500 138</span>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <Mail className="w-4 h-4" />
-              <span className="text-sm">info@turystyka.gov.pl</span>
+              <span className="text-sm">kontakt@msit.gov.pl</span>
             </div>
           </div>
         </div>

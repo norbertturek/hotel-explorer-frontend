@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# TurystykaHotele - Rejestr Obiektów Hotelarskich
 
-## Project info
+Oficjalna aplikacja do przeglądania rejestru obiektów hotelarskich CWOIH (Centralna Wiedza o Obiektach Hotelarskich) udostępnianego przez Ministerstwo Sportu i Turystyki.
 
-**URL**: https://lovable.dev/projects/15956b55-82b0-4a36-9b52-7bef920ba2b5
+## Opis projektu
 
-## How can I edit this code?
+Aplikacja umożliwia wyszukiwanie i przeglądanie obiektów hotelarskich w Polsce na podstawie danych z oficjalnego API turystyka.gov.pl. Użytkownicy mogą filtrować hotele według województwa, powiatu, gminy, rodzaju obiektu i kategorii.
 
-There are several ways of editing your application.
+## Funkcjonalności
 
-**Use Lovable**
+- **Wyszukiwanie hoteli** - wyszukiwanie po nazwie z automatycznym podpowiadaniem
+- **Filtrowanie** - według województwa, powiatu, gminy, rodzaju obiektu i kategorii
+- **Paginacja** - przeglądanie wyników z podziałem na strony
+- **Szczegóły hotelu** - pełne informacje o obiekcie, kontakt, lokalizacja
+- **Eksport danych** - możliwość eksportu danych do CSV
+- **Responsywny design** - dostosowany do urządzeń mobilnych
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/15956b55-82b0-4a36-9b52-7bef920ba2b5) and start prompting.
+## Technologie
 
-Changes made via Lovable will be committed automatically to this repo.
+- **React 18** z TypeScript
+- **Vite** - narzędzie do budowania
+- **Tailwind CSS** - stylowanie
+- **shadcn/ui** - komponenty UI
+- **React Query** - zarządzanie stanem i cache'owaniem
+- **React Router** - routing
+- **Axios** - komunikacja z API
 
-**Use your preferred IDE**
+## Instalacja i uruchomienie
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Klonowanie repozytorium
+git clone <URL_REPOZYTORIUM>
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Przejście do katalogu projektu
+cd hotel-explorer-frontend
 
-Follow these steps:
+# Instalacja zależności
+yarn install
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Uruchomienie w trybie deweloperskim
+yarn dev
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Budowanie do produkcji
+yarn build
 ```
 
-**Edit a file directly in GitHub**
+## API
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Aplikacja korzysta z oficjalnego API Ministerstwa Sportu i Turystyki:
+- **Endpoint główny**: `https://api.turystyka.gov.pl/registers/open/cwoh`
+- **Dokumentacja**: Dostępna na stronie api.turystyka.gov.pl
 
-**Use GitHub Codespaces**
+## Kontakt
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Ministerstwo Sportu i Turystyki**
+- Telefon: 22 266 32 64
+- Email: kontakt@msit.gov.pl
+- Infolinia dla Obywatela: 222 500 138
 
-## What technologies are used for this project?
+## Licencja
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/15956b55-82b0-4a36-9b52-7bef920ba2b5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Projekt wykorzystuje dane publiczne udostępniane przez Ministerstwo Sportu i Turystyki.
